@@ -53,11 +53,11 @@ class OrderBook:
 
 
         def summarise(book, reverse=False):  
-        '''
-        Nested helper function for get_depth.
-        Its job is to iterate through a given SortedDict and aggregate quantity at each price level.
+            '''
+            Nested helper function for get_depth.
+            Its job is to iterate through a given SortedDict and aggregate quantity at each price level.
         
-        '''
+            '''
             summary = []
             items = reversed(book.items()) if reverse else book.items()
             '''
@@ -66,11 +66,11 @@ class OrderBook:
 
             '''
             for price, orders in list(items)[:levels]:  
-            '''
-            Recalling that the .items() method returns key value pairs.
-            Levels attribute defined in the get_depth function.
-            Slicing the list taking the first levels (e.g. 5) price levels.
-            '''
+                '''
+                Recalling that the .items() method returns key value pairs.
+                Levels attribute defined in the get_depth function.
+                Slicing the list taking the first levels (e.g. 5) price levels.
+                '''
                 total_qty = sum(o.remaining() for o in orders)
                 '''
                 For all the orders at a given price, we call the remaining() method from orders.py
