@@ -1,11 +1,13 @@
 from sortedcontainers import SortedDict
 from collections import deque
+from datetime import datetime
 
 class OrderBook:
     def __init__(self):
         self.buy = SortedDict(lambda x: -x)  # Descending
         self.sell = SortedDict()             # Ascending
         self.order_map = {}  # order_id -> order (for cancellation)
+        self.trades = []  # List of executed trades
 
     def add_order(self, order):  # Takes one argument from the order class
         book = self.buy if order.side == 'buy' else self.sell
@@ -42,6 +44,76 @@ class OrderBook:
         order.status = 'cancelled'  # Updates the order object
         del self.order_map[order_id]  # Removes the corresponding order object from the order map
         return True  
+
+    def match_order(self, incoming_order):
+        book = self.sell if incoming_order.side == 'buy' else self.buy
+        matched_trades = []
+
+        while incoming_order.remaining() > 0 and book: 
+            ''' 
+            Recalling our .remaining() method is from order.py
+            We need both in this conditional as we need a sell for a buy and vice versa (hence book).
+            '''
+            best_price, queue = book.peekitem(0)
+            '''
+            .peekitem() returns a key-value pair at a specific index without removing it from the dictionary.
+            '''
+
+
+            if incoming_order.type == 'limit':
+                if incoming_order.side == 'buy' and best_price > incoming_order.price:
+                    break
+                if incoming_order.side == 'sell' and best_price < incoming_order.price:
+                    break
+
+            if not queue: 
+                '''
+                queue is the deque of orders at the current best price level.
+                This therefore checks if the deque is empty (and there are no more orders at that price).
+                '''
+                book.popitem(0) # This removes and returns the first key-value pair from the SortedDict book.
+                continue
+
+
+            resting_order = queue[0]
+            trade_qty = min(incoming_order.remaining(), resting_order.remaining())
+            trade_price = resting_order.price
+
+            # Recording the trade
+            trade = {
+                'trade_id': len(self.trades) + 1, # Gives a unique sequential ID for traceability
+                'buy_order_id': incoming_order.id if incoming_order.side == 'buy' else resting_order.id,
+                'sell_order_id': incoming_order.id if incoming_order.side == 'sell' else resting_order.id,
+                'price': trade_price,
+                'quantity': trade_qty,
+                'timestamp': datetime.utcnow(),
+            }
+            self.trades.append(trade)
+            matched_trades.append(trade)
+
+            # Update order fill quantities for the new and the not new orders
+            incoming_order.filled_qty += trade_qty
+            resting_order.filled_qty += trade_qty
+
+            # Remove fully filled resting order
+            if resting_order.is_filled():
+                queue.popleft()  # Removes the first order from the deque at that price level
+                self.order_map.pop(resting_order.id, None)  # Removes the corresponding order from the global order_map
+
+            if not queue:
+                book.pop(best_price) # Removes the best price if queue is empty
+
+        # Update incoming order status
+        if incoming_order.remaining() == 0:
+            incoming_order.status = 'filled'
+        elif incoming_order.type == 'limit':
+            incoming_order.status = 'partially_filled' if incoming_order.filled_qty > 0 else 'open'
+            self.add_order(incoming_order) # Adds the remaining incoming to the order book if not fully matched
+        else:  # Market order can't stay on book
+            incoming_order.status = 'partially_filled' if incoming_order.filled_qty > 0 else 'cancelled'
+
+        return matched_trades
+            
 
     def get_best_bid_ask(self):
         best_bid = (self.buy.peekitem(0) if self.buy else (None, None))
