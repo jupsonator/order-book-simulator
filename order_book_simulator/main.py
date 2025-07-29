@@ -1,24 +1,31 @@
-from order import Order
-from order_book import OrderBook
+from exchange import Exchange
 
 def main():
-    order1 = Order("BTC/USD", "buy", "limit", 10000, 2)
-    order2 = Order("BTC/USD", "sell", "limit", 10100, 1)
-    order3 = Order("BTC/USD", "buy", "market", None, 2)
+    exchange = Exchange()
 
-    book = OrderBook()
-    book.add_order(order1)
-    book.add_order(order2)
+    print("\n--- SUBMIT LIMIT SELL (10100 x 1 BTC) ---")
+    order1, _ = exchange.submit_order("BTC/USD", "sell", "limit", 10100, 1)
 
-    print("Best Bid/Ask:", book.get_best_bid_ask())
-    print("Order Book Depth:", book.get_depth())
+    print("\n--- SUBMIT LIMIT BUY (10000 x 2 BTC) ---")
+    order2, _ = exchange.submit_order("BTC/USD", "buy", "limit", 10000, 2)
 
-    trades = book.match_order(order3)
+    print("\n--- SUBMIT MARKET BUY (2 BTC) ---")
+    order3, trades = exchange.submit_order("BTC/USD", "buy", "market", None, 2)
 
-    if trades:
-        print("\nTrades Executed:")
-        for trade in trades:
-            print(trade)
+    print("\nTrades Executed:")
+    for trade in trades:
+        print(trade)
+
+    print("\nFinal Order Statuses:")
+    print(order1)
+    print(order2)
+    print(order3)
+
+    print("\n--- Current Order Book ---")
+    exchange.print_book()
+
+    print("\n--- All Trades ---")
+    exchange.print_trades()
 
 if __name__ == "__main__":
     main()

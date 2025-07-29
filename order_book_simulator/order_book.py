@@ -154,6 +154,8 @@ class OrderBook:
             'bids': summarise(self.buy, reverse=True),
             'asks': summarise(self.sell)
         }
+    def get_trades(self):
+        return self.trades
 
 
 
