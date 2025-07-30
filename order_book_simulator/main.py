@@ -1,4 +1,5 @@
 from exchange import Exchange
+from visualise import plot_order_book_depth, plot_trade_history
 
 def main():
     exchange = Exchange()
