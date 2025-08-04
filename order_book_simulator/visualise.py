@@ -42,7 +42,7 @@ def plot_trade_history(trades):
     label = 'Trade Price' is the label for the legend
     '''
     for i, qty in enumerate(qtys):
-        plt.annotate(f"{qty}", (times[i], prices[i]), textcoords="offset points", xytext=(0,10), ha='center')
+        plt.annotate(f"{qtys[i]:.2f}", (times[i], prices[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
     plt.xlabel('Time')
     plt.ylabel('Price')

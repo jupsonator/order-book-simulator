@@ -149,7 +149,7 @@ class OrderBook:
                 '''
                 summary.append((price, total_qty))
             return summary
-
+        
         return {
             'bids': summarise(self.buy, reverse=True),
             'asks': summarise(self.sell)
